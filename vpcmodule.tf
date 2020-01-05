@@ -265,14 +265,11 @@ resource "aws_instance" "backend" {
       "sudo apt-get install python sshpass -y",
     ]
   }
-
-
-
 }
 
 resource "null_resource" "ansible-main" {
-provisioner "local-exec" {
-  command = <<EOT
+  provisioner "local-exec" {
+    command = <<EOT
         sleep 100;
         > jenkins-ci.ini;
         echo "[jenkins-ci]"| tee -a jenkins-ci.ini;
