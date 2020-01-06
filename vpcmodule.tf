@@ -88,6 +88,36 @@ resource "aws_security_group" "nginx-sg" {
   }
 }
 
+# Define the security group for private subnet
+resource "aws_security_group" "sgdb"{
+  name = "sg_test_web"
+  description = "Allow traffic from public subnet"
+
+  ingress {
+    from_port = 3306
+    to_port = 3306
+    protocol = "tcp"
+    cidr_blocks = [var.subnet1_address_space]
+  }
+
+  ingress {
+    from_port = -1
+    to_port = -1
+    protocol = "icmp"
+    cidr_blocks = [var.subnet1_address_space]
+  }
+
+  ingress {
+    from_port = 22
+    to_port = 22
+    protocol = "tcp"
+    cidr_blocks = [var.subnet1_address_space]
+  }
+
+  vpc_id = aws_vpc.vpc.id
+
+}
+
 # LOAD BALANCER #
 resource "aws_elb" "web" {
   name = "nginx-elb"
@@ -187,6 +217,18 @@ resource "null_resource" "ansible-main" {
         ansible-playbook -e  sshKey=${var.private_key_path} -i jenkins-ci.ini ./ansible/setup-backend.yaml -u ubuntu -v
     EOT
 }
+}
+
+
+# Define database inside the private subnet
+resource "aws_instance" "db" {
+   ami  = "ami-0d5d9d301c853a04a"
+   instance_type = "t2.micro"
+   key_name = var.key_name
+   subnet_id = aws_subnet.subnet3.id
+   vpc_security_group_ids = [aws_security_group.sgdb.id]
+   source_dest_check = false
+
 }
 ##################################################################################
 # OUTPUT
